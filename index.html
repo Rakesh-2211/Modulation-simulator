@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modulation Master - AM & FM Calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="background-blobs">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="app-container">
+        <header>
+            <h1>Modulation<span class="highlight">Master</span></h1>
+            <p>Advanced RF Signal Calculator</p>
+        </header>
+
+        <nav class="tabs">
+            <button class="tab-btn active" data-target="am-calc">AM Modulation</button>
+            <button class="tab-btn" data-target="fm-calc">FM Modulation</button>
+        </nav>
+
+        <main>
+            <!-- AM Calculator Section -->
+            <section id="am-calc" class="calc-section active">
+                <div class="input-panel glass-panel">
+                    <h2>Input Parameters</h2>
+                    <div class="input-group">
+                        <label for="am-ac">Carrier Amplitude (A<sub>c</sub>)</label>
+                        <input type="number" id="am-ac" placeholder="e.g. 10" step="any">
+                        <select class="unit-select" id="am-ac-unit">
+                            <option value="1e-9">nV</option>
+                            <option value="1e-6">µV</option>
+                            <option value="1e-3">mV</option>
+                            <option value="1" selected>V</option>
+                            <option value="1e3">kV</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="am-am">Message Amplitude (A<sub>m</sub>)</label>
+                        <input type="number" id="am-am" placeholder="e.g. 5" step="any">
+                        <select class="unit-select" id="am-am-unit">
+                            <option value="1e-9">nV</option>
+                            <option value="1e-6">µV</option>
+                            <option value="1e-3">mV</option>
+                            <option value="1" selected>V</option>
+                            <option value="1e3">kV</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="am-fc">Carrier Frequency (f<sub>c</sub>)</label>
+                        <input type="number" id="am-fc" placeholder="e.g. 1000" step="any">
+                        <select class="unit-select" id="am-fc-unit">
+                            <option value="1">Hz</option>
+                            <option value="1e3" selected>kHz</option>
+                            <option value="1e6">MHz</option>
+                            <option value="1e9">GHz</option>
+                            <option value="1e12">THz</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="am-fm">Message Frequency (f<sub>m</sub>)</label>
+                        <input type="number" id="am-fm" placeholder="e.g. 10" step="any">
+                        <select class="unit-select" id="am-fm-unit">
+                            <option value="1">Hz</option>
+                            <option value="1e3" selected>kHz</option>
+                            <option value="1e6">MHz</option>
+                            <option value="1e9">GHz</option>
+                            <option value="1e12">THz</option>
+                        </select>
+                    </div>
+                    <button id="calc-am-btn" class="primary-btn">Calculate AM</button>
+                    
+                    <div class="playback-controls">
+                        <button id="am-play-btn" class="control-btn play-btn" disabled>
+                            <span class="play-icon">▶</span> Run / Play
+                        </button>
+                        <button id="am-mute-btn" class="control-btn mute-btn" title="Mute/Unmute">
+                            <span class="mute-icon">🔊</span>
+                        </button>
+                        <div class="volume-container">
+                            <label for="am-volume">Volume</label>
+                            <input type="range" id="am-volume" min="0" max="1" step="0.05" value="0.3">
+                        </div>
+                    </div>
+                    <div class="audio-note" id="am-audio-note">
+                        Calculate first to enable audio & animation.
+                    </div>
+                </div>
+
+                <div class="output-panel glass-panel">
+                    <h2>Results</h2>
+                    <div class="result-grid">
+                        <div class="result-card">
+                            <h3>Modulation Index (m)</h3>
+                            <div class="value" id="am-res-m">--</div>
+                        </div>
+                        <div class="result-card">
+                            <h3>Modulation %</h3>
+                            <div class="value" id="am-res-percent">--</div>
+                        </div>
+                        <div class="result-card">
+                            <h3>Carrier Power (P<sub>c</sub>)</h3>
+                            <div class="value" id="am-res-pc">-- <span class="unit">W</span></div>
+                            <small>Assuming R=1Ω</small>
+                        </div>
+                        <div class="result-card">
+                            <h3>Total Power (P<sub>t</sub>)</h3>
+                            <div class="value" id="am-res-pt">-- <span class="unit">W</span></div>
+                        </div>
+                        <div class="result-card">
+                            <h3>Sideband Power (P<sub>sb</sub>)</h3>
+                            <div class="value" id="am-res-psb">-- <span class="unit">W</span></div>
+                        </div>
+                        <div class="result-card wide">
+                            <h3>Sideband Frequencies</h3>
+                            <div class="value">
+                                <span id="am-res-lsb">--</span> LSB | 
+                                <span id="am-res-usb">--</span> USB
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="graph-panel glass-panel">
+                    <h2>Time Domain (Signal Waveform)</h2>
+                    <canvas id="am-chart"></canvas>
+                </div>
+                <div class="graph-panel glass-panel">
+                    <h2>Frequency Domain (Bandwidth Spectrum)</h2>
+                    <canvas id="am-spectrum-chart"></canvas>
+                </div>
+            </section>
+
+            <!-- FM Calculator Section -->
+            <section id="fm-calc" class="calc-section">
+                <div class="input-panel glass-panel">
+                    <h2>Input Parameters</h2>
+                    <div class="input-group">
+                        <label for="fm-dev">Frequency Deviation (Δf)</label>
+                        <input type="number" id="fm-dev" placeholder="e.g. 75" step="any">
+                        <select class="unit-select" id="fm-dev-unit">
+                            <option value="1">Hz</option>
+                            <option value="1e3" selected>kHz</option>
+                            <option value="1e6">MHz</option>
+                            <option value="1e9">GHz</option>
+                            <option value="1e12">THz</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label for="fm-fm">Max Modulating Freq (f<sub>m</sub>)</label>
+                        <input type="number" id="fm-fm" placeholder="e.g. 15" step="any">
+                        <select class="unit-select" id="fm-fm-unit">
+                            <option value="1">Hz</option>
+                            <option value="1e3" selected>kHz</option>
+                            <option value="1e6">MHz</option>
+                            <option value="1e9">GHz</option>
+                            <option value="1e12">THz</option>
+                        </select>
+                    </div>
+                    <button id="calc-fm-btn" class="primary-btn">Calculate FM</button>
+
+                    <div class="playback-controls">
+                        <button id="fm-play-btn" class="control-btn play-btn" disabled>
+                            <span class="play-icon">▶</span> Run / Play
+                        </button>
+                        <button id="fm-mute-btn" class="control-btn mute-btn" title="Mute/Unmute">
+                            <span class="mute-icon">🔊</span>
+                        </button>
+                        <div class="volume-container">
+                            <label for="fm-volume">Volume</label>
+                            <input type="range" id="fm-volume" min="0" max="1" step="0.05" value="0.3">
+                        </div>
+                    </div>
+                    <div class="audio-note" id="fm-audio-note">
+                        Calculate first to enable audio & animation.
+                    </div>
+                </div>
+
+                <div class="output-panel glass-panel">
+                    <h2>Results (Carson's Rule)</h2>
+                    <div class="result-grid">
+                        <div class="result-card">
+                            <h3>Modulation Index (β)</h3>
+                            <div class="value" id="fm-res-beta">--</div>
+                        </div>
+                        <div class="result-card highlight-card">
+                            <h3>Total Bandwidth</h3>
+                            <div class="value highlight-text" id="fm-res-bw">-- <span class="unit">kHz</span></div>
+                            <small>BW = 2 * (Δf + f<sub>m</sub>)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="graph-panel glass-panel">
+                    <h2>Time Domain (Signal Waveform)</h2>
+                    <canvas id="fm-chart"></canvas>
+                </div>
+                <div class="graph-panel glass-panel">
+                    <h2>Frequency Domain (Bandwidth Spectrum)</h2>
+                    <canvas id="fm-spectrum-chart"></canvas>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
